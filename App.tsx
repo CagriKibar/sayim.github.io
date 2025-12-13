@@ -40,12 +40,13 @@ const App: React.FC = () => {
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (manualBarcode.trim()) {
-      handleScan(manualBarcode.trim());
+      handleScan(manualBarcode.trim(), manualQuantity);
       setManualBarcode("");
+      setManualQuantity(1);
     }
   };
 
-  const handleScan = useCallback((barcode: string) => {
+  const handleScan = useCallback((barcode: string, qty: number = 1) => {
     setItems(prevItems => {
       const existingItemIndex = prevItems.findIndex(item => item.barcode === barcode);
 
@@ -54,17 +55,17 @@ const App: React.FC = () => {
         const newItems = [...prevItems];
         newItems[existingItemIndex] = {
           ...newItems[existingItemIndex],
-          quantity: newItems[existingItemIndex].quantity + 1,
+          quantity: newItems[existingItemIndex].quantity + qty,
           lastScannedAt: Date.now()
         };
-        addToast(`${barcode}: Adet Artırıldı (${newItems[existingItemIndex].quantity})`, 'success');
+        addToast(`${barcode}: +${qty} Eklendi (Top: ${newItems[existingItemIndex].quantity})`, 'success');
         return newItems;
       } else {
         // Add new
         addToast(`${barcode}: Listeye Eklendi`, 'success');
         return [{
           barcode,
-          quantity: 1,
+          quantity: qty,
           lastScannedAt: Date.now()
         }, ...prevItems];
       }
@@ -117,21 +118,50 @@ const App: React.FC = () => {
             </div>
 
             {/* Manual Entry */}
-            <form onSubmit={handleManualSubmit} className="flex gap-2">
+            {/* Manual Entry */}
+            <form onSubmit={handleManualSubmit} className="bg-white p-3 rounded-xl shadow-sm border border-gray-200 flex flex-col gap-3">
               <input
                 type="text"
                 value={manualBarcode}
                 onChange={(e) => setManualBarcode(e.target.value)}
-                placeholder="Manuel barkod..."
-                className="flex-1 border border-gray-300 rounded-lg px-4 py-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base"
+                placeholder="Manuel barkod giriniz..."
+                className="w-full border border-gray-300 rounded-lg px-4 py-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base font-mono"
               />
-              <button
-                type="submit"
-                disabled={!manualBarcode}
-                className="bg-blue-600 text-white px-6 rounded-lg font-bold shadow-sm hover:bg-blue-700 disabled:opacity-50 transition-colors active:scale-95"
-              >
-                EKLE
-              </button>
+
+              <div className="flex gap-2 h-12">
+                {/* Quantity Control */}
+                <div className="flex-1 flex items-center bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => setManualQuantity(Math.max(1, manualQuantity - 1))}
+                    className="h-full px-3 text-gray-500 hover:bg-gray-200 active:bg-gray-300 transition-colors flex items-center justify-center border-r border-gray-200 w-12"
+                  >
+                    <Minus size={20} />
+                  </button>
+                  <input
+                    type="number"
+                    min="1"
+                    value={manualQuantity}
+                    onChange={(e) => setManualQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="flex-1 w-full h-full text-center bg-transparent border-none focus:ring-0 font-bold text-gray-800 text-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setManualQuantity(manualQuantity + 1)}
+                    className="h-full px-3 text-blue-600 hover:bg-blue-50 active:bg-blue-100 transition-colors flex items-center justify-center border-l border-gray-200 w-12"
+                  >
+                    <Plus size={20} />
+                  </button>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={!manualBarcode}
+                  className="px-6 bg-blue-600 text-white rounded-lg font-bold shadow-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors active:scale-95 flex items-center justify-center min-w-[100px]"
+                >
+                  EKLE
+                </button>
+              </div>
             </form>
 
             <div className="flex-1 overflow-hidden flex flex-col">
