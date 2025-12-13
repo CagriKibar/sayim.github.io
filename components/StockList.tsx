@@ -54,7 +54,7 @@ const StockList: React.FC<StockListProps> = ({
                             <div key={item.barcode} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col gap-3">
                                 <div className="flex justify-between items-start">
                                     <div>
-                                        <span className="font-mono text-lg font-bold text-gray-800 tracking-wide">{item.barcode}</span>
+                                        <span className="font-mono text-lg font-bold text-gray-800 tracking-wide break-all">{item.barcode}</span>
                                         <p className="text-xs text-gray-400 mt-1">
                                             Son Okuma: {new Date(item.lastScannedAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
                                         </p>
