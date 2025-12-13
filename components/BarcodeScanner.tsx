@@ -26,22 +26,34 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan }) => {
 
             // Feedback logic
             try {
-                if (navigator.vibrate) navigator.vibrate(50);
+                if (navigator.vibrate) navigator.vibrate([10, 50, 10]); // Success vibration pattern
 
                 const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
                 if (AudioContext) {
                     const ctx = new AudioContext();
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.frequency.setValueAtTime(1200, ctx.currentTime);
-                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 0.1);
+
+                    // Tone 1
+                    const osc1 = ctx.createOscillator();
+                    const gain1 = ctx.createGain();
+                    osc1.connect(gain1);
+                    gain1.connect(ctx.destination);
+                    osc1.frequency.setValueAtTime(800, ctx.currentTime);
+                    gain1.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc1.start();
+                    osc1.stop(ctx.currentTime + 0.1);
+
+                    // Tone 2 (Success feeling)
+                    const osc2 = ctx.createOscillator();
+                    const gain2 = ctx.createGain();
+                    osc2.connect(gain2);
+                    gain2.connect(ctx.destination);
+                    osc2.frequency.setValueAtTime(1200, ctx.currentTime + 0.1);
+                    gain2.gain.setValueAtTime(0.1, ctx.currentTime + 0.1);
+                    osc2.start(ctx.currentTime + 0.1);
+                    osc2.stop(ctx.currentTime + 0.25);
                 }
             } catch (e) {
-                // Ignore audio errors (e.g. user didn't interact yet)
+                // Ignore audio errors
             }
 
             setLastScanTime(now);
@@ -74,7 +86,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan }) => {
     });
 
     return (
-        <div className="relative w-full aspect-[4/3] bg-black rounded-2xl overflow-hidden shadow-lg border-2 border-gray-800">
+        <div className="relative w-full h-full bg-black rounded-2xl overflow-hidden shadow-lg border-2 border-gray-800">
             {error ? (
                 <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-4 text-center">
                     <AlertCircle size={48} className="text-red-500 mb-2" />
