@@ -3,13 +3,14 @@ import { StockItem, AppMode, ToastMessage } from './types';
 import BarcodeScanner from './components/BarcodeScanner';
 import StockList from './components/StockList';
 import { exportToExcel } from './services/excelService';
-import { Scan, List, Download } from 'lucide-react';
+import { Scan, List, Download, Plus, Minus } from 'lucide-react';
 
 const App: React.FC = () => {
   const [items, setItems] = useState<StockItem[]>([]);
   const [mode, setMode] = useState<AppMode>(AppMode.SCAN);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [manualBarcode, setManualBarcode] = useState("");
+  const [manualQuantity, setManualQuantity] = useState(1);
 
   // Load data from localStorage on mount
   useEffect(() => {
