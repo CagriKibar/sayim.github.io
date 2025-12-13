@@ -53,11 +53,8 @@ const StockList: React.FC<StockListProps> = ({
                         {items.map((item) => (
                             <div key={item.barcode} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col gap-3">
                                 <div className="flex justify-between items-start">
-                                    <div>
+                                    <div className="flex items-center gap-3">
                                         <span className="font-mono text-lg font-bold text-gray-800 tracking-wide break-all">{item.barcode}</span>
-                                        <p className="text-xs text-gray-400 mt-1">
-                                            Son Okuma: {new Date(item.lastScannedAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
-                                        </p>
                                     </div>
                                     <button
                                         onClick={() => onDelete(item.barcode)}

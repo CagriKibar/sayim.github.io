@@ -79,10 +79,14 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan }) => {
             }
         },
         hints: new Map([
-            // Multi-format support is good, but TRY_HARDER is key for difficult codes
-            [2, true] // DecodeHintType.TRY_HARDER
+            // TRY_HARDER for accuracy
+            [2, true],
+            // POSSIBLE_FORMATS: AZTEC, CODABAR, CODE_39, CODE_93, CODE_128, DATA_MATRIX, EAN_8, EAN_13, ITF, MAXICODE, PDF_417, QR_CODE, RSS_14, RSS_EXPANDED, UPC_A, UPC_E, UPC_EAN_EXTENSION
+            [3, [
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
+            ]]
         ]),
-        timeBetweenDecodingAttempts: 100 // Slightly faster polling
+        timeBetweenDecodingAttempts: 50 // Faster polling for "fast" reading
     });
 
     return (
