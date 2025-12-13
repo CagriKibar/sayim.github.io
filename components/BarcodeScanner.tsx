@@ -49,11 +49,12 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan }) => {
             onScan(code);
         },
         onError(err) {
+            const error = err as any;
             // Ignore "NotFound" errors as they happen every frame where no code is found
-            if (err.name !== "NotFoundException" && err.name !== "ChecksumException" && err.name !== "FormatException") {
-                console.error(err);
+            if (error.name !== "NotFoundException" && error.name !== "ChecksumException" && error.name !== "FormatException") {
+                console.error(error);
                 // Only show perm errors
-                if (err.name === "NotAllowedError" || err.name === "NotFoundError") {
+                if (error.name === "NotAllowedError" || error.name === "NotFoundError") {
                     setError("Kamera erişimi sağlanamadı. Lütfen izinleri kontrol edin.");
                 }
             }
