@@ -9,6 +9,7 @@ const App: React.FC = () => {
   const [items, setItems] = useState<StockItem[]>([]);
   const [mode, setMode] = useState<AppMode>(AppMode.SCAN);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [manualBarcode, setManualBarcode] = useState("");
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -33,6 +34,14 @@ const App: React.FC = () => {
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 2000);
+  };
+
+  const handleManualSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (manualBarcode.trim()) {
+      handleScan(manualBarcode.trim());
+      setManualBarcode("");
+    }
   };
 
   const handleScan = useCallback((barcode: string) => {
@@ -106,6 +115,24 @@ const App: React.FC = () => {
               <BarcodeScanner onScan={handleScan} />
             </div>
 
+            {/* Manual Entry */}
+            <form onSubmit={handleManualSubmit} className="flex gap-2">
+              <input
+                type="text"
+                value={manualBarcode}
+                onChange={(e) => setManualBarcode(e.target.value)}
+                placeholder="Manuel barkod..."
+                className="flex-1 border border-gray-300 rounded-lg px-4 py-3 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-base"
+              />
+              <button
+                type="submit"
+                disabled={!manualBarcode}
+                className="bg-blue-600 text-white px-6 rounded-lg font-bold shadow-sm hover:bg-blue-700 disabled:opacity-50 transition-colors active:scale-95"
+              >
+                EKLE
+              </button>
+            </form>
+
             <div className="flex-1 overflow-hidden flex flex-col">
               <h3 className="text-sm font-semibold text-gray-500 mb-2 px-1 uppercase tracking-wider">Son Okunanlar</h3>
               <div className="flex-1 overflow-y-auto bg-white rounded-xl shadow-inner border border-gray-200 p-2">
@@ -113,8 +140,8 @@ const App: React.FC = () => {
                   <p className="text-center text-gray-400 mt-10 text-sm">Henüz okuma yapılmadı.</p>
                 ) : (
                   items.slice(0, 10).map((item) => (
-                    <div key={item.barcode} className="flex justify-between items-center p-3 border-b border-gray-100 last:border-0">
-                      <span className="font-mono text-sm font-medium text-gray-700">{item.barcode}</span>
+                    <div key={item.barcode} className="flex justify-between items-center p-3 border-b border-gray-100 last:border-0 gap-2">
+                      <span className="font-mono text-sm font-medium text-gray-700 truncate flex-1 min-w-0">{item.barcode}</span>
                       <span className="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded-full">
                         {item.quantity} Adet
                       </span>
