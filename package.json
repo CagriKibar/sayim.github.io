@@ -12,7 +12,9 @@
     "lucide-react": "^0.559.0",
     "xlsx": "^0.18.5",
     "react-dom": "^19.2.1",
-    "html5-qrcode": "^2.3.8",
+    "react-zxing": "2.0.2",
+    "@zxing/library": "^0.21.3",
+    "@zxing/browser": "^0.1.5",
     "react": "^19.2.1"
   },
   "devDependencies": {
