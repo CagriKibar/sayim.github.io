@@ -24,11 +24,29 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan }) => {
                 return;
             }
 
+            // Feedback logic
+            try {
+                if (navigator.vibrate) navigator.vibrate(50);
+
+                const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+                if (AudioContext) {
+                    const ctx = new AudioContext();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.frequency.setValueAtTime(1200, ctx.currentTime);
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.1);
+                }
+            } catch (e) {
+                // Ignore audio errors (e.g. user didn't interact yet)
+            }
+
             setLastScanTime(now);
             setLastScanned(code);
             onScan(code);
-
-            // Visual feedback could be handled here or in parent
         },
         onError(err) {
             // Ignore "NotFound" errors as they happen every frame where no code is found
