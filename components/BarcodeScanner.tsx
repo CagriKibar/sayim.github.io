@@ -318,15 +318,22 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, addToast }) => 
 
                     {/* HUD Status Text */}
                     <div className="absolute -top-12 left-0 right-0 text-center">
-                        <p className={`font-mono text-xs tracking-[0.2em] font-bold ${isScanningActive ? 'text-red-500 animate-pulse' : 'text-gray-500'}`}>
-                            {!isScanningActive ? 'STANDBY' : (
-                                <>
-                                    {scanMode === 'AUTO' && 'AUTOFOCUS SEARCHING'}
-                                    {scanMode === 'MACRO' && 'MACRO OPTICS ENGAGED'}
-                                    {scanMode === 'MANUAL' && 'MANUAL OVERRIDE'}
-                                </>
+                        <div className="flex flex-col items-center gap-1">
+                            {devices.length > 0 && (
+                                <p className="text-white/40 font-mono text-[10px] tracking-widest uppercase mb-1">
+                                    KAMERA: {devices.findIndex(d => d.deviceId === selectedDeviceId) + 1} / {devices.length}
+                                </p>
                             )}
-                        </p>
+                            <p className={`font-mono text-xs tracking-[0.2em] font-bold ${isScanningActive ? 'text-red-500 animate-pulse' : 'text-gray-500'}`}>
+                                {!isScanningActive ? 'STANDBY' : (
+                                    <>
+                                        {scanMode === 'AUTO' && 'AUTOFOCUS SEARCHING'}
+                                        {scanMode === 'MACRO' && 'MACRO OPTICS ENGAGED'}
+                                        {scanMode === 'MANUAL' && 'MANUAL OVERRIDE'}
+                                    </>
+                                )}
+                            </p>
+                        </div>
                         {lastScanned && (Date.now() - lastScanTime < 2000) && (
                             <p className="text-green-400 font-mono text-xs tracking-widest mt-1">ACQUIRED: {lastScanned}</p>
                         )}
