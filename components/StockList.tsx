@@ -51,7 +51,11 @@ const StockList: React.FC<StockListProps> = ({
                 ) : (
                     <div className="space-y-3 pb-20">
                         {items.map((item) => (
-                            <div key={item.barcode} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col gap-3 transition-all">
+                            <div
+                                key={item.barcode}
+                                onClick={(e) => e.stopPropagation()}
+                                className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col gap-3 transition-all"
+                            >
                                 <div className="flex justify-between items-start">
                                     <div className="flex flex-col gap-1 flex-1">
                                         <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Barkod</span>
