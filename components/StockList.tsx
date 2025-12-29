@@ -51,14 +51,19 @@ const StockList: React.FC<StockListProps> = ({
                 ) : (
                     <div className="space-y-3 pb-20">
                         {items.map((item) => (
-                            <div key={item.barcode} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col gap-3">
+                            <div key={item.barcode} className="bg-white rounded-xl p-4 shadow-sm border border-gray-100 flex flex-col gap-3 transition-all">
                                 <div className="flex justify-between items-start">
-                                    <div className="flex items-center gap-3">
-                                        <span className="font-mono text-lg font-bold text-gray-800 tracking-wide break-all">{item.barcode}</span>
+                                    <div className="flex flex-col gap-1 flex-1">
+                                        <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Barkod</span>
+                                        <span className="font-mono text-lg font-bold text-gray-800 tracking-wide break-all block">{item.barcode}</span>
                                     </div>
                                     <button
-                                        onClick={() => onDelete(item.barcode)}
-                                        className="text-gray-300 hover:text-red-500 p-2 -mr-2 -mt-2 active:bg-red-50 rounded-full transition-colors"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onDelete(item.barcode);
+                                        }}
+                                        className="text-gray-300 hover:text-white hover:bg-red-500 p-2 rounded-lg transition-all active:scale-90"
+                                        title="Sil"
                                     >
                                         <Trash2 size={20} />
                                     </button>
@@ -66,18 +71,27 @@ const StockList: React.FC<StockListProps> = ({
 
                                 <div className="flex items-center justify-between bg-gray-50 rounded-lg p-1">
                                     <button
-                                        onClick={() => onDecrement(item.barcode)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onDecrement(item.barcode);
+                                        }}
                                         className="w-12 h-10 flex items-center justify-center bg-white border border-gray-200 rounded-md text-gray-600 shadow-sm active:bg-gray-100 active:scale-95 transition-all"
                                     >
                                         <Minus size={20} />
                                     </button>
 
-                                    <span className="font-bold text-xl text-blue-600 w-full text-center">
-                                        {item.quantity}
-                                    </span>
+                                    <div className="flex flex-col items-center flex-1">
+                                        <span className="text-[8px] text-gray-400 font-bold uppercase">Miktar</span>
+                                        <span className="font-bold text-xl text-blue-600">
+                                            {item.quantity}
+                                        </span>
+                                    </div>
 
                                     <button
-                                        onClick={() => onIncrement(item.barcode)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onIncrement(item.barcode);
+                                        }}
                                         className="w-12 h-10 flex items-center justify-center bg-blue-600 border border-blue-600 rounded-md text-white shadow-sm active:bg-blue-700 active:scale-95 transition-all"
                                     >
                                         <Plus size={20} />
