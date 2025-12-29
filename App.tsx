@@ -73,16 +73,24 @@ const App: React.FC = () => {
   }, []);
 
   const handleIncrement = (barcode: string) => {
-    setItems(prev => prev.map(item =>
-      item.barcode === barcode ? { ...item, quantity: item.quantity + 1 } : item
-    ));
+    setItems(prev => {
+      const newItems = prev.map(item =>
+        item.barcode === barcode ? { ...item, quantity: item.quantity + 1, lastScannedAt: Date.now() } : item
+      );
+      return newItems;
+    });
   };
 
   const handleDecrement = (barcode: string) => {
-    setItems(prev => prev.map(item => {
-      if (item.barcode !== barcode) return item;
-      return { ...item, quantity: Math.max(0, item.quantity - 1) };
-    }));
+    setItems(prev => {
+      const newItems = prev.map(item => {
+        if (item.barcode !== barcode) return item;
+        // Ensure quantity doesn't go below 1 through decrementing, 
+        // deletion should be a separate explicit action.
+        return { ...item, quantity: Math.max(1, item.quantity - 1), lastScannedAt: Date.now() };
+      });
+      return newItems;
+    });
   };
 
   const handleDelete = (barcode: string) => {
@@ -114,7 +122,7 @@ const App: React.FC = () => {
         {mode === AppMode.SCAN && (
           <div className="flex flex-col h-full gap-4 animate-fadeIn">
             <div className="flex-none h-[40vh] min-h-[300px]">
-              <BarcodeScanner onScan={handleScan} />
+              <BarcodeScanner onScan={handleScan} addToast={addToast} />
             </div>
 
             {/* Manual Entry */}

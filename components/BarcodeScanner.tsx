@@ -1,17 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useZxing } from "react-zxing";
-import { AlertCircle, Zap, ZapOff, ZoomIn, ZoomOut, Sun, Moon, Focus, ScanLine, Eye, Settings2 } from 'lucide-react';
+import { AlertCircle, Zap, ZapOff, ZoomIn, ZoomOut, Sun, Moon, Focus, ScanLine, Eye, Settings2, Camera, Play, Square } from 'lucide-react';
 
 interface BarcodeScannerProps {
     onScan: (barcode: string) => void;
+    addToast: (text: string, type: 'success' | 'error' | 'info') => void;
 }
 
 type ScanMode = 'AUTO' | 'MACRO' | 'MANUAL';
 
-const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan }) => {
+const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, addToast }) => {
     const [error, setError] = useState<string | null>(null);
     const [lastScanned, setLastScanned] = useState<string>("");
     const [lastScanTime, setLastScanTime] = useState<number>(0);
+    const [isScanningActive, setIsScanningActive] = useState(false);
+
+    // Camera selection
+    const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+    const [selectedDeviceId, setSelectedDeviceId] = useState<string>("");
 
     // Camera capabilities state
     const [hasTorch, setHasTorch] = useState(false);
@@ -38,8 +44,38 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan }) => {
 
     const [videoTrack, setVideoTrack] = useState<MediaStreamTrack | null>(null);
 
+    useEffect(() => {
+        const getDevices = async () => {
+            try {
+                const allDevices = await navigator.mediaDevices.enumerateDevices();
+                const videoDevices = allDevices.filter(device => device.kind === 'videoinput');
+                setDevices(videoDevices);
+
+                // Try to find the best back camera initially
+                const backCameras = videoDevices.filter(d =>
+                    d.label.toLowerCase().includes('back') ||
+                    d.label.toLowerCase().includes('arka') ||
+                    d.label.toLowerCase().includes('0') // Usually the main camera
+                );
+
+                if (backCameras.length > 0) {
+                    // Start with the last back camera as it's often the main/best quality one on multi-cam devices
+                    setSelectedDeviceId(backCameras[backCameras.length - 1].deviceId);
+                    addToast(`Kamera Başlatıldı: ${backCameras[backCameras.length - 1].label || 'Arka Kamera'}`, 'success');
+                } else if (videoDevices.length > 0) {
+                    setSelectedDeviceId(videoDevices[0].deviceId);
+                }
+            } catch (err) {
+                console.error("Error listing devices:", err);
+            }
+        };
+        getDevices();
+    }, []);
+
     const { ref } = useZxing({
         onDecodeResult(result) {
+            if (!isScanningActive) return;
+
             const code = result.getText();
             const now = Date.now();
 
@@ -75,13 +111,17 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan }) => {
             setLastScanTime(now);
             setLastScanned(code);
             onScan(code);
+
+            // Auto-disable scan after success to prevent "phantom" reads
+            setIsScanningActive(false);
         },
         onError(err) {
             // Suppress errors, normal in a scan loop
         },
         constraints: {
             video: {
-                facingMode: "environment",
+                deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
+                facingMode: selectedDeviceId ? undefined : "environment",
                 height: { min: 720, ideal: 1080 },
                 width: { min: 1280, ideal: 1920 },
                 // @ts-ignore
@@ -162,7 +202,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan }) => {
         return () => {
             videoElement.removeEventListener('loadedmetadata', checkCapabilities);
         };
-    }, [ref]);
+    }, [ref, selectedDeviceId]);
 
     const applyConstraints = (constraints: any) => {
         if (videoTrack) {
@@ -231,6 +271,21 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan }) => {
         applyConstraints({ torch: newState });
     };
 
+    const switchCamera = () => {
+        if (devices.length < 2) return;
+        const currentIndex = devices.findIndex(d => d.deviceId === selectedDeviceId);
+        const nextIndex = (currentIndex + 1) % devices.length;
+        setSelectedDeviceId(devices[nextIndex].deviceId);
+
+        // Show camera switch toast/feedback
+        const label = devices[nextIndex].label || `Kamera ${nextIndex + 1}`;
+        addToast(`Kamera Değiştirildi: ${label}`, 'info');
+    };
+
+    // Need access to addToast from props or define it here if we want to show it in Scanner
+    // For now I'll use a local state for feedback or assume App manages it.
+    // Let's add an onMessage prop to BarcodeScanner to communicate back to App
+
     return (
         <div className="relative w-full h-full bg-black rounded-2xl overflow-hidden shadow-2xl border-2 border-gray-800 ring-2 ring-red-500/20 group">
             {/* High-Tech Overlay */}
@@ -244,7 +299,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan }) => {
             {/* Video Feed */}
             <video
                 ref={ref}
-                className={`w-full h-full object-cover transform transition-all duration-500 ${scanMode === 'MACRO' ? 'scale-125' : 'scale-105'}`}
+                className={`w-full h-full object-cover transform transition-all duration-500 ${scanMode === 'MACRO' ? 'scale-125' : 'scale-105'} ${!isScanningActive ? 'grayscale-[0.5]' : ''}`}
                 playsInline
                 muted
             />
@@ -252,18 +307,25 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan }) => {
             {/* Focus HUD */}
             <div className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center">
                 <div className={`w-[70%] h-[40%] transition-all duration-300 relative ${scanMode === 'MANUAL' ? 'border-2 border-yellow-500/50' : ''}`}>
-                    <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-red-500 rounded-tl-lg animate-pulse"></div>
-                    <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-red-500 rounded-tr-lg animate-pulse"></div>
-                    <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-red-500 rounded-bl-lg animate-pulse"></div>
-                    <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-red-500 rounded-br-lg animate-pulse"></div>
-                    <div className="absolute top-0 left-0 w-full h-0.5 bg-red-600 shadow-[0_0_15px_rgba(255,0,0,1)] animate-[scan_2s_ease-in-out_infinite]"></div>
+                    <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-red-500 rounded-tl-lg"></div>
+                    <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-red-500 rounded-tr-lg"></div>
+                    <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-red-500 rounded-bl-lg"></div>
+                    <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-red-500 rounded-br-lg"></div>
+
+                    {isScanningActive && (
+                        <div className="absolute top-0 left-0 w-full h-0.5 bg-red-600 shadow-[0_0_15px_rgba(255,0,0,1)] animate-[scan_2s_ease-in-out_infinite]"></div>
+                    )}
 
                     {/* HUD Status Text */}
                     <div className="absolute -top-12 left-0 right-0 text-center">
-                        <p className="text-red-500 font-mono text-xs tracking-[0.2em] font-bold animate-pulse">
-                            {scanMode === 'AUTO' && 'AUTOFOCUS SEARCHING'}
-                            {scanMode === 'MACRO' && 'MACRO OPTICS ENGAGED'}
-                            {scanMode === 'MANUAL' && 'MANUAL OVERRIDE'}
+                        <p className={`font-mono text-xs tracking-[0.2em] font-bold ${isScanningActive ? 'text-red-500 animate-pulse' : 'text-gray-500'}`}>
+                            {!isScanningActive ? 'STANDBY' : (
+                                <>
+                                    {scanMode === 'AUTO' && 'AUTOFOCUS SEARCHING'}
+                                    {scanMode === 'MACRO' && 'MACRO OPTICS ENGAGED'}
+                                    {scanMode === 'MANUAL' && 'MANUAL OVERRIDE'}
+                                </>
+                            )}
                         </p>
                         {lastScanned && (Date.now() - lastScanTime < 2000) && (
                             <p className="text-green-400 font-mono text-xs tracking-widest mt-1">ACQUIRED: {lastScanned}</p>
@@ -274,6 +336,11 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan }) => {
 
             {/* Top Right Controls */}
             <div className="absolute top-6 right-6 flex flex-col gap-3 z-30">
+                {devices.length > 1 && (
+                    <button onClick={switchCamera} className="p-3 rounded-full backdrop-blur-md border border-white/10 text-white/70 bg-black/40 active:scale-95 transition-transform">
+                        <Camera size={20} />
+                    </button>
+                )}
                 {hasTorch && (
                     <button onClick={toggleTorch} className={`p-3 rounded-full backdrop-blur-md border border-white/10 ${isTorchOn ? 'text-yellow-400 bg-yellow-500/20' : 'text-white/70 bg-black/40'}`}>
                         {isTorchOn ? <Zap size={20} fill="currentColor" /> : <ZapOff size={20} />}
@@ -281,8 +348,8 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan }) => {
                 )}
                 {hasFocusControl && (
                     <button onClick={cycleScanMode} className={`p-3 rounded-full backdrop-blur-md border border-white/10 flex flex-col items-center justify-center gap-1 ${scanMode === 'AUTO' ? 'text-green-400 bg-green-500/20' :
-                            scanMode === 'MACRO' ? 'text-purple-400 bg-purple-500/20' :
-                                'text-yellow-400 bg-yellow-500/20'
+                        scanMode === 'MACRO' ? 'text-purple-400 bg-purple-500/20' :
+                            'text-yellow-400 bg-yellow-500/20'
                         }`}>
                         {scanMode === 'AUTO' && <ScanLine size={20} />}
                         {scanMode === 'MACRO' && <Eye size={20} />}
@@ -290,6 +357,22 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan }) => {
                         <span className="text-[8px] font-bold">{scanMode}</span>
                     </button>
                 )}
+            </div>
+
+            {/* Main OKUT Button */}
+            <div className="absolute left-1/2 bottom-32 -translate-x-1/2 z-30">
+                <button
+                    onClick={() => setIsScanningActive(!isScanningActive)}
+                    className={`
+                        w-24 h-24 rounded-full border-4 flex flex-col items-center justify-center gap-1 shadow-2xl transition-all active:scale-90
+                        ${isScanningActive
+                            ? 'bg-red-600 border-red-400 text-white animate-pulse shadow-red-500/50'
+                            : 'bg-white/10 backdrop-blur-xl border-white/20 text-white shadow-black/50'}
+                    `}
+                >
+                    {isScanningActive ? <Square size={32} fill="currentColor" /> : <Play size={32} fill="currentColor" className="ml-1" />}
+                    <span className="text-xs font-black tracking-tighter uppercase">{isScanningActive ? 'DURDUR' : 'OKUT'}</span>
+                </button>
             </div>
 
             {/* Bottom Controls Panel */}
